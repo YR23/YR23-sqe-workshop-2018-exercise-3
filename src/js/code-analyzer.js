@@ -156,7 +156,6 @@ function ParseDataToTable(expression)
 
 function ParseProgram(expression)
 {
-    graph.push({text:'',next:'',True:'',type:'',nextT:'',nextF:''});
     ParseDataToTable(expression.body[0]);
     return graph;
 }
@@ -186,24 +185,31 @@ function SeqStop(exp) {
 
 function ParseBlockStatement(expression)
 {
+    var counter =0;
     for (var i=0;i<expression.body.length;i++)
     {
         if (SeqStop(expression.body[i])) {
-            if (graph[graph.length-1]['type'] == 'opp')
+            graph.push({text: '', next: '', True: '', type: '', nextT: '', nextF: ''});
+            if (graph[graph.length-2]['type'] == 'opp')
             {
-                graph[graph.length-1]['name'] = 'opp'+op.length;op.push(op.length);}
-            else if (graph[graph.length-1]['type'] == 'condif')
+                graph[graph.length-2]['name'] = 'opp'+op[op.length-1];}
+            else if (graph[graph.length-2]['type'] == 'condif')
             {
                 graph[graph.length-1]['name'] = 'condif'+condif;
                 condif++;}
-            else if (graph[graph.length-1]['type'] == 'condwhile')
+            else if (graph[graph.length-2]['type'] == 'condwhile')
             {
                 graph[graph.length-3]['name'] = 'condwhile'+condwhile;
                 condwhile++;
             }
         }
-
-
+        else {
+            if (counter==0 && expression.body[i].type!='FunctionDeclaration') {
+                graph.push({text: '', next: '', True: '', type: '', nextT: '', nextF: ''});
+                counter++;
+                op.push(op.length);
+            }
+        }
         ParseDataToTable(expression.body[i]);
     }
 }
@@ -305,9 +311,7 @@ function ParseAssignmentExpression(expression)
     let bool = Peek(stack2) && CheckFirst(stack2);
     if(bool)
         RealVals[left] = ParseForReal(expression.right);
-    if (op.length == op[op.length-1])
-        op.push(op.length+1);
-    SetGraph2(graph.length-1,GraphCreator.Assignment(left,right),bool,'opp','opp'+op.length);
+    SetGraph2(graph.length-1,GraphCreator.Assignment(left,right),bool,'opp','opp'+op[op.length-1]);
     expression=expression;
 }
 
@@ -418,18 +422,11 @@ function CheckFirst(s)
 function ParseIfStatement(expression)
 {
     var condition = ParseDataToTable(expression.test);
-    var booli = expression.type=='IfStatement';
-    graph.push({text: '', next: '', True: '', type: '', nextT: '', nextF: ''}); //the If
-    SetGraph2(graph.length - 1, GraphCreator.If(condition), Peek(stack2), 'condif', 'condif' + condif); //the if text
-    if (booli){SetNext(graph.length - 2, booli, 'condif' + condif);stack3.push(op.length);} //the one before the if
-    else SetNext(graph.length - 3, false, 'condif' + condif);
-    graph.push({text: '', next: '', True: '', type: '', nextT: '', nextF: ''}); // the consquence for if
-    stack.push(condif);
+    var RealCondition = CheckForCondition(expression.test) && Peek(stack2)
+    SetGraph2(graph.length - 1, GraphCreator.If(condition),RealCondition, 'condif', 'condif' + condif); //the if text
     condif++;
-    stack2.push(CheckForCondition(expression.test));
+    stack2.push(RealCondition);
     ParseDataToTable(expression.consequent);
-    connectEvery.push(op[op.length-1]);
-    var lastop = stack3.pop();
     var last = stack2.pop();
     let finalIf = stack.pop();SetNextForIf(finalIf);
     if (expression.alternate != null) {
@@ -437,14 +434,17 @@ function ParseIfStatement(expression)
             expression.alternate.type= 'ElseIfStatement';
             ParseDataToTable(expression.alternate);}
         else {
-            graph.push({text:'',next:'',True:'',type:'',nextT:'',nextF:''});
-            SetGraph2(graph.length-1,'',!last,'opp','opp'+op.length);
             SetNextByName('condif'+finalIf,'opp'+op.length,'F');
-            stack2.push(!last);
-            op.push(op.length)
             ParseDataToTable(expression.alternate);
+            var bool = false;
+            if (stack2.length==1) {
+                stack2.push(true);
+                bool=true;
+            }
+            SetGraph2(graph.length-1,'',CheckFirst(stack2) && !CheckForCondition(expression.test),'opp','opp'+op[op.length-1]);
+            if (bool)
+                stack2.pop();
             connectEvery.push(op[op.length-1]);
-            stack2.pop();
             if (stack2.length==1) {
                 graph.push({text: '', next: '', True: '', type: '', nextT: '', nextF: ''});
                 SetGraph2(graph.length - 1, 'continue', true, 'everyone', 'everyone' + every);
