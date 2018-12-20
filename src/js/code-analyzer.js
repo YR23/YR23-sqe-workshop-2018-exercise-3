@@ -5,6 +5,7 @@ import * as GraphCreator from './Part3';
 export {
     parseCode,ParseDataToTable,ParseDataToTableBig
 };
+var lastIF = true;
 var startingop=0;
 var op = [];
 var every = 0;
@@ -21,6 +22,8 @@ var stack = [];
 var stack2 = [true];
 var stack3 = [];
 var connectEvery = [];
+var stackWasReached = [];
+var stackLastIf = [];
 
 
 function ParseDataToTableBig(codeToParse,args) {
@@ -30,11 +33,14 @@ function ParseDataToTableBig(codeToParse,args) {
     condwhile = 0;
     stack = [];
     stack2 = [true];
+    stackLastIf = [true];
     stack3 = [];
     Do = true;
     elseDo = true;
     graph = [];
+    lastIF = true;
     connectEvery = [];
+    stackWasReached = [];
     let Code = parseCode(codeToParse);
     ArgsBefore = args;
     let FinalCode = ParseDataToTable(Code);
@@ -48,9 +54,12 @@ const parseCode = (codeToParse) => {
     condwhile = 0;
     stack = [];
     RealVals = {};
+    stackWasReached = [true];
+    lastIF = true;
     Do = true;
     graph = [];
     stack2 = [true];
+    stackLastIf = [true];
     stack3 = [];
     ArgsBefore = [];
     connectEvery = [];
@@ -196,7 +205,7 @@ function ParseBlockStatement(expression)
             else if (graph[graph.length-2]['type'] == 'condif')
             {
                 graph[graph.length-1]['name'] = 'condif'+condif;
-                condif++;}
+            }
             else if (graph[graph.length-2]['type'] == 'condwhile')
             {
                 graph[graph.length-3]['name'] = 'condwhile'+condwhile;
@@ -422,19 +431,26 @@ function CheckFirst(s)
 function ParseIfStatement(expression)
 {
     var condition = ParseDataToTable(expression.test);
-    var RealCondition = CheckForCondition(expression.test) && Peek(stack2)
-    SetGraph2(graph.length - 1, GraphCreator.If(condition),RealCondition, 'condif', 'condif' + condif); //the if text
+    var type = expression.type == 'IfStatement'; var ShouldICheckMySelf;
+    if (type)
+        ShouldICheckMySelf =  Peek(stackWasReached) && stackLastIf.pop();
+    else
+        ShouldICheckMySelf =  Peek(stackWasReached) && !stackLastIf.pop();
+    SetGraph2(graph.length - 1, GraphCreator.If(condition),ShouldICheckMySelf, 'condif', 'condif' + condif); //the if text
     condif++;
-    stack2.push(RealCondition);
+    stackWasReached.push(ShouldICheckMySelf && CheckForCondition(expression.test));
+    stackLastIf.push(CheckForCondition(expression.test));
     ParseDataToTable(expression.consequent);
-    var last = stack2.pop();
+    var last = stackWasReached.pop();
     let finalIf = stack.pop();SetNextForIf(finalIf);
     if (expression.alternate != null) {
         if (expression.alternate.type==='IfStatement') {
             expression.alternate.type= 'ElseIfStatement';
+            stackWasReached.push(last);
             ParseDataToTable(expression.alternate);}
         else {
             SetNextByName('condif'+finalIf,'opp'+op.length,'F');
+            stackWasReached.push(last);
             ParseDataToTable(expression.alternate);
             var bool = false;
             if (stack2.length==1) {
@@ -445,7 +461,7 @@ function ParseIfStatement(expression)
             if (bool)
                 stack2.pop();
             connectEvery.push(op[op.length-1]);
-            if (stack2.length==1) {
+            if (stackWasReached.length==1) {
                 graph.push({text: '', next: '', True: '', type: '', nextT: '', nextF: ''});
                 SetGraph2(graph.length - 1, 'continue', true, 'everyone', 'everyone' + every);
                 FixNextEveryOne();
