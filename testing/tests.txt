@@ -64,3 +64,76 @@ while (x==2)
    }
 return 3;
 }
+
+
+
+
+///////////////////*2*///////////////////
+x=1
+function YR (x) {
+let a=0;
+let b=1;
+while(x==2) {while(x==2){x=x;}}
+return 3;
+}
+///////////////////*3*///////////////////
+x=1
+function YR (x) {
+let a=0;
+let b=1;
+while(x==1)
+ {
+while(x==2)
+{
+if (x==1) {x=x}
+else if (x==2) {a=a}
+}
+}
+return 3;
+}
+
+///////////////////*4*///////////////////
+x=1 and then x=2
+function YR (x) {
+let a=0;
+let b=1;
+while(x==2)
+ {
+if (x==2)
+{
+while(x==2)
+{
+if (x==2) {x=x}
+else if (x==1) {a=a}
+}
+}
+}
+return 3;
+}
+
+///////////////////*FinalCodeWithWhileAndIf*///////////////////
+x=1 and then x=2
+function YR (x) {
+let a=0;
+let b=1;
+while(x==2)
+ {
+if (x==1)
+{
+while(x==1)
+{
+if (x==1) {x=x}
+else if (x==1) {a=a}
+}
+}
+else
+{
+while(x==2)
+{
+if (x==1) {x=x}
+else if (x==2) {a=a}
+}
+}
+}
+return 3;
+}

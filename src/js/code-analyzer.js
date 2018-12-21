@@ -5,6 +5,7 @@ import * as GraphCreator from './Part3';
 export {
     parseCode,ParseDataToTable,ParseDataToTableBig
 };
+var checker = 1;
 var lastIF = true;
 var startingop=0;
 var op = [];
@@ -29,6 +30,7 @@ var stackConnectContinue = [];
 
 
 function ParseDataToTableBig(codeToParse,args) {
+    checker = 1;
     op = [];
     every = 0;
     condif = 0;
@@ -52,6 +54,7 @@ function ParseDataToTableBig(codeToParse,args) {
 }
 
 const parseCode = (codeToParse) => {
+    checker = 1;
     op = [];
     condif = 0;
     every = 0;
@@ -262,6 +265,10 @@ function ParseBlockStatement(expression)
                 graph[graph.length - 1]['name'] = 'condif' + condif;
                 stackEvery.push('opp'+op[op.length-1]);
             }
+            if (expression.body[i].type=='WhileStatement') {
+                graph[graph.length - 1]['name'] = 'condwhile' + condwhile;
+                stackEvery.push('opp'+op[op.length-1]);
+            }
         }
         else {
             if (counter==0 && expression.body[i].type!='FunctionDeclaration' && expression.body[i].type!='ReturnStatement') {
@@ -276,7 +283,7 @@ function ParseBlockStatement(expression)
         SetNextByName(lastPop[0],graph[graph.length-1]['name'],lastPop[1]);
         ParseDataToTable(expression.body[i]);
         var lastOpp = undefined;
-        if (expression.body[i].type=='IfStatement')
+        if (expression.body[i].type=='IfStatement' || expression.body[i].type=='WhileStatement')
             lastOpp = stackEvery.pop();
         if (lastOpp != undefined)
         {
@@ -433,17 +440,18 @@ function ParseBinaryExpression(expression)
 
 function ParseWhileStatement(expression)
 {
-    Do = CheckForCondition(expression.test);
     var condition = ParseDataToTable(expression.test);
     var ShouldICheckMySelf =  Peek(stackWasReached) && Peek(stackLastIf);
-    SetGraph2(graph.length - 1, GraphCreator.If(condition),ShouldICheckMySelf, 'condif', 'condif' + condif); //the if text
-    var lastCondIf = condif;
-    stackCameFrom.push('condif' + condif+'|T');
-    condif++;
+    SetGraph2(graph.length - 1, GraphCreator.While(condition),ShouldICheckMySelf, 'condwhile', 'condwhile' + condwhile); //the if text
+    stackCameFrom.push('condwhile' + condwhile+'|T');
+    var lastCondwhile = condwhile;
+    condwhile++;
     stackWasReached.push(ShouldICheckMySelf);
     stackLastIf.push(CheckForCondition(expression.test));
-    ParseDataToTable(expression.consequent);
     ParseDataToTable(expression.body);
+    stackWasReached.pop();
+    stackLastIf.pop();
+    SetNextByName('condwhile'+lastCondwhile,'everyone'+every,'F');
 }
 
 function CheckForCondition(condition) {

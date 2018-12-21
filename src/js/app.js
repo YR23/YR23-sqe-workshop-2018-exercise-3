@@ -8,7 +8,7 @@ $(document).ready(function () {
         let codeToParse = $('#codePlaceholder').val();
         var args = readArgs($('#args').val());
         var FinalGraph = ParseDataToTableBig(codeToParse,args);
-        let TypeToType={opp:'operation',condif:'condition',everyone:'start',confwhile:'inputoutput',return:'operation'};
+        let TypeToType={opp:'operation',condif:'condition',everyone:'start',condwhile:'condition',return:'operation',checker:'inputoutput'};
         $('#parsedCode').val(CreateTableFromGraph(FinalGraph,TypeToType));
     });
 });
@@ -63,10 +63,16 @@ function CreatePart2(FinalGraph) {
     let str = '';
 
     for (let i=0;i<FinalGraph.length;i++) {
-        if (FinalGraph[i].type != 'condif') {
+        if (FinalGraph[i].next != '')
+        {
+            str += FinalGraph[i].name + '->' + FinalGraph[i].next + '\n' ;
+        }
+        if (FinalGraph[i].type != 'condif' && FinalGraph[i].type != 'condwhile') {
             if (FinalGraph[i].type != 'return')
                 if (FinalGraph[i].nextT != '') {
-                    if (FinalGraph[i].type == 'everyone')
+                    if (FinalGraph[i].nextT.substr(0,7) == 'checker')
+                        str += FinalGraph[i].name + '(bottom)->' + FinalGraph[i].nextT + '\n' ;
+                    else if (FinalGraph[i].type == 'everyone')
                         str += FinalGraph[i].name + '(right)->' + FinalGraph[i].nextT + '\n' ;
                     else
                         str += FinalGraph[i].name + '(bottom)->' + FinalGraph[i].nextT + '\n';
@@ -75,9 +81,12 @@ function CreatePart2(FinalGraph) {
         else {
             if (FinalGraph[i].nextF != '' || FinalGraph[i].nextT != '') {
                 if (FinalGraph[i].nextT != '')
+
                     str += FinalGraph[i].name + '(yes,right)->' + FinalGraph[i].nextT + '\n';
+
                 if (FinalGraph[i].nextF != '')
                     str += FinalGraph[i].name + '(no,bottom)->' + FinalGraph[i].nextF + '\n';
+
             }
         }
     }
