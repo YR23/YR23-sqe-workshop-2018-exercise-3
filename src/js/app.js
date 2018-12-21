@@ -20,9 +20,9 @@ function readArgs(val) {
 function CreateTableFromGraph(FinalGraph,TypeToType) {
     let strpart1  = '';
     let strpart2 = '';
+
     strpart1 = CreatePart1(FinalGraph,TypeToType);
     strpart2 = CreatePart2(FinalGraph,TypeToType);
-
 
     const diagram = flowchart.parse(strpart1 +strpart2);
     diagram.drawSVG('diagram', {
@@ -67,10 +67,9 @@ function CreatePart2(FinalGraph) {
             if (FinalGraph[i].type != 'return')
                 if (FinalGraph[i].nextT != '') {
                     if (FinalGraph[i].type == 'everyone')
-                        str += FinalGraph[i].name + '(right)->' + FinalGraph[i].nextT ;
+                        str += FinalGraph[i].name + '(right)->' + FinalGraph[i].nextT + '\n' ;
                     else
-                        str += FinalGraph[i].name + '(right)->' + FinalGraph[i].nextT;
-
+                        str += FinalGraph[i].name + '(bottom)->' + FinalGraph[i].nextT + '\n';
                 }
         }
         else {

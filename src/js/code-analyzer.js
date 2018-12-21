@@ -494,7 +494,6 @@ function ParseIfStatement(expression)
             stackWasReached.pop();
             SetGraph2(graph.length - 1, '', ShouldICheckMySelf && !(CheckForCondition(expression.test)), 'opp', 'opp' + op[op.length - 1]);
         }
-
     }
     else
     {
