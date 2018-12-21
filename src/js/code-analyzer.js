@@ -22,7 +22,7 @@ var stack = [];
 var stack2 = [true];
 var stack3 = [];
 var stackCameFrom = ['heyyyyy|T'];
-var connectEvery = [];
+var stackEvery = [];
 var stackWasReached = [];
 var stackLastIf = [];
 
@@ -40,8 +40,8 @@ function ParseDataToTableBig(codeToParse,args) {
     elseDo = true;
     graph = [];
     stackCameFrom = ['heyyyyy|T'];
+    stackEvery = [];
     lastIF = true;
-    connectEvery = [];
     stackWasReached = [];
     let Code = parseCode(codeToParse);
     ArgsBefore = args;
@@ -65,7 +65,7 @@ const parseCode = (codeToParse) => {
     stack3 = [];
     stackCameFrom = ['heyyyyy|T'];
     ArgsBefore = [];
-    connectEvery = [];
+    stackEvery = [];
     CreateConverter();
     var ep = esprima.parseScript(codeToParse);
     return ep;
@@ -195,30 +195,79 @@ function SeqStop(exp) {
     return exp.type=='WhileStatement' || exp.type=='IfStatement' || exp.type=='ElseIfStatement';
 }
 
+function GetMeOppNum(opp)
+{
+    return parseInt(opp.substr(3));
+}
+
+function FindLatestOpp() {
+    for (var i=graph.length-1;i>0;i--)
+    {
+        if (graph[i]['name'].substr(0,3)=='opp')
+            return graph[i]['name'];
+    }
+}
+
+function ConnectOppsToEvrey(lastOpp) {
+
+    var start = GetMeOppNum(lastOpp);
+    var end = GetMeOppNum(FindLatestOpp());
+    for (var i=0;i<graph.length;i++)
+    {
+        if (graph[i]['name'].substr(0,3)=='opp')
+            if (GetMeOppNum(graph[i]['name'])>start && GetMeOppNum(graph[i]['name'])<=end)
+                if (graph[i]['nextT'] == '')
+                    graph[i]['nextT'] = 'everyone'+every;
+    }
+
+}
+
+function InitLastPop() {
+    return 'heyyyyy|T'.split('|');
+
+}
+
 function ParseBlockStatement(expression)
 {
     var counter =0;
+    var lastPop;
     for (var i=0;i<expression.body.length;i++)
     {
-
+        lastPop = InitLastPop();
         if (SeqStop(expression.body[i])) {
-            var lastPop = stackCameFrom.pop().split('|');
+            lastPop = stackCameFrom.pop().split('|');
             graph.push({text: '', next: '', True: '', type: '', nextT: '', nextF: ''});
-            if (expression.body[i].type=='IfStatement')
-                graph[graph.length-1]['name'] = 'condif'+condif;
+            if (expression.body[i].type=='IfStatement') {
+                graph[graph.length - 1]['name'] = 'condif' + condif;
+                stackEvery.push('opp'+op[op.length-1]);
+            }
         }
         else {
             if (counter==0 && expression.body[i].type!='FunctionDeclaration') {
-                var lastPop = stackCameFrom.pop().split('|');
+                lastPop = stackCameFrom.pop().split('|');
                 graph.push({text: '', next: '', True: '', type: '', nextT: '', nextF: ''});
                 counter++;
                 op.push(op.length);
                 graph[graph.length-1]['name'] = 'opp'+op[op.length-1];
                 stackCameFrom.push('opp'+op[op.length-1]+'|T');
             }
+
         }
         SetNextByName(lastPop[0],graph[graph.length-1]['name'],lastPop[1]);
         ParseDataToTable(expression.body[i]);
+        var lastOpp = undefined;
+        if (expression.body[i].type=='IfStatement')
+            lastOpp = stackEvery.pop();
+        if (lastOpp != undefined && stackEvery.length==0)
+        {
+            graph.push({text: '', next: '', True: '', type: '', nextT: '', nextF: ''});
+            SetGraph2(graph.length - 1, 'continue', true, 'everyone', 'everyone' + every);
+            ConnectOppsToEvrey(lastOpp);
+            stackCameFrom = [];
+            stackCameFrom.push('everyone' + every+'|T');
+            every++;
+
+        }
 
     }
 }
@@ -376,46 +425,11 @@ function SetNextByName(name,next,bool) {
     }
 }
 
-function FixNextEveryOne() {
-    /*
-    var counter =-1;
-    for (var i=0;i<graph.length;i++)
-    {
-        if (graph[i]['name'].substr(0,3)=='opp')
-            counter++;
-        if (counter>=startingop && counter<op.length)
-            SetNextByName('opp'+counter,'everyone'+every,'T');
-    }
-    */
-    for (var i=0;i<connectEvery.length;i++)
-        SetNextByName('opp'+connectEvery[i],'everyone'+every,'T');
-
-}
-
-function SetNextForIf(finalIf) {
-
-    for (let i=0; i <graph.length;i++)
-    {
-        var res = graph[i].name.substr(6);
-        if (!isNaN(res)) res=parseInt(res);
-        if (finalIf==res)
-        {
-            graph[i].nextT=graph[i+1].name;
-            break;
-        }
-    }
-}
-
 function Peek(s)
 {
     var res = s.pop();
     s.push(res);
     return res;
-}
-
-function CheckFirst(s)
-{
-    return s[1];
 }
 
 function ParseIfStatement(expression)
@@ -447,16 +461,11 @@ function ParseIfStatement(expression)
         else {
             stackWasReached.push(ShouldICheckMySelf);
             stackLastIf.push(!(CheckForCondition(expression.test)));
-            stackCameFrom.push('condif' + lastCondIf+'|F');
+            stackCameFrom.push('condif' + lastCondIf + '|F');
             ParseDataToTable(expression.alternate);
-            SetGraph2(graph.length-1,'',ShouldICheckMySelf && !(CheckForCondition(expression.test)),'opp','opp'+op[op.length-1]);
-            connectEvery.push(op[op.length-1]);
-            if (stackWasReached.length==1) {
-                graph.push({text: '', next: '', True: '', type: '', nextT: '', nextF: ''});
-                SetGraph2(graph.length - 1, 'continue', true, 'everyone', 'everyone' + every);
-                //FixNextEveryOne();
-                every++;
-            }}
+            SetGraph2(graph.length - 1, '', ShouldICheckMySelf && !(CheckForCondition(expression.test)), 'opp', 'opp' + op[op.length - 1]);
+        }
+
     }}
 
 
@@ -475,8 +484,9 @@ function ParseReturnStatement(expression)
         ret = '';
     graph.push({text:'',next:'',True:'',type:'',nextT:'',nextF:''});
     SetGraph2(graph.length-1,GraphCreator.Return(ret),true,'return','return0');
-    if (graph[graph.length-2]['type'] == 'everyone')
-        graph[graph.length-2].nextT =  graph[graph.length-1].name;
+    var lastPop = stackCameFrom.pop().split('|');
+    SetNextByName(lastPop[0],graph[graph.length-1]['name'],lastPop[1]);
+
 }
 
 function ParseUnaryExpression(expression)
