@@ -65,15 +65,20 @@ function CreatePart2(FinalGraph) {
     for (let i=0;i<FinalGraph.length;i++) {
         if (FinalGraph[i].type != 'condif') {
             if (FinalGraph[i].type != 'return')
-                if (FinalGraph[i].nextT != '')
-                    str += FinalGraph[i].name + '->' + FinalGraph[i].nextT + '\n';
+                if (FinalGraph[i].nextT != '') {
+                    if (FinalGraph[i].type == 'everyone')
+                        str += FinalGraph[i].name + '(right)->' + FinalGraph[i].nextT ;
+                    else
+                        str += FinalGraph[i].name + '(right)->' + FinalGraph[i].nextT;
+
+                }
         }
         else {
             if (FinalGraph[i].nextF != '' || FinalGraph[i].nextT != '') {
-                if (FinalGraph[i].nextF != '')
-                    str += FinalGraph[i].name + '(no)->' + FinalGraph[i].nextF + '\n';
                 if (FinalGraph[i].nextT != '')
-                    str += FinalGraph[i].name + '(yes)->' + FinalGraph[i].nextT + '\n';
+                    str += FinalGraph[i].name + '(yes,right)->' + FinalGraph[i].nextT + '\n';
+                if (FinalGraph[i].nextF != '')
+                    str += FinalGraph[i].name + '(no,bottom)->' + FinalGraph[i].nextF + '\n';
             }
         }
     }
