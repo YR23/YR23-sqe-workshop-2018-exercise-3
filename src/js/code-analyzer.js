@@ -1,5 +1,4 @@
 import * as esprima from 'esprima';
-import * as StringCreator from './Part2';
 import * as GraphCreator from './Part3';
 
 export {
@@ -263,7 +262,10 @@ function ParseBlockStatement(expression)
             graph.push({text: '', next: '', True: '', type: '', nextT: '', nextF: ''});
             if (expression.body[i].type=='IfStatement') {
                 graph[graph.length - 1]['name'] = 'condif' + condif;
-                stackEvery.push('opp'+op[op.length-1]);
+                if (op.length==0)
+                    stackEvery.push('opp0');
+                else
+                    stackEvery.push('opp'+op[op.length-1]);
             }
             if (expression.body[i].type=='WhileStatement') {
                 graph[graph.length - 1]['name'] = 'condwhile' + condwhile;
@@ -485,12 +487,12 @@ function ParseIfStatement(expression)
         ShouldICheckMySelf = Peek(stackWasReached) && !Peek(stackLastIf);
         SetGraph2(graph.length - 1, GraphCreator.ElseIf(condition),ShouldICheckMySelf, 'condif', 'condif' + condif); //the if text
     }
-
     var lastCondIf = condif;
     stackCameFrom.push('condif' + condif+'|T');
     condif++;
+    var checkForCond = CheckForCondition(expression.test);
     stackWasReached.push(ShouldICheckMySelf);
-    stackLastIf.push(CheckForCondition(expression.test));
+    stackLastIf.push(checkForCond);
     ParseDataToTable(expression.consequent);
     stackLastIf.pop();
     stackWasReached.pop();
@@ -498,7 +500,7 @@ function ParseIfStatement(expression)
         if (expression.alternate.type==='IfStatement') {
             expression.alternate.type= 'ElseIfStatement';
             stackWasReached.push(ShouldICheckMySelf);
-            stackLastIf.push(CheckForCondition(expression.test));
+            stackLastIf.push(checkForCond);
             graph.push({text: '', next: '', True: '', type: '', nextT: '', nextF: ''});
             stackCameFrom.pop();
             SetNextByName('condif' + lastCondIf,'condif' +condif ,'F');
@@ -507,12 +509,12 @@ function ParseIfStatement(expression)
             stackWasReached.pop();}
         else {
             stackWasReached.push(ShouldICheckMySelf);
-            stackLastIf.push(!(CheckForCondition(expression.test)));
+            stackLastIf.push(!checkForCond);
             stackCameFrom.push('condif' + lastCondIf + '|F');
             ParseDataToTable(expression.alternate);
             stackLastIf.pop();
             stackWasReached.pop();
-            SetGraph2(graph.length - 1, '', ShouldICheckMySelf && !(CheckForCondition(expression.test)), 'opp', 'opp' + op[op.length - 1]);
+            SetGraph2(graph.length - 1, '', ShouldICheckMySelf && !(checkForCond), 'opp', 'opp' + op[op.length - 1]);
         }
     }
     else
