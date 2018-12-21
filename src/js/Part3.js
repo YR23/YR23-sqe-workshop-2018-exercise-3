@@ -9,20 +9,20 @@ export function Return(ret) {
 }
 
 export function Else() {
-    return  'else';
+    return  'Else';
 }
 
 export function ElseIf(condition) {
-    return condition;
+    return 'ElseIf:\n '+condition;
 
 }
 
 export function If(condition) {
-    return condition;
+    return 'If:\n'+condition;
 }
 
 export function While(condition) {
-    return condition;
+    return 'While:\n'+condition;
 
 }
 

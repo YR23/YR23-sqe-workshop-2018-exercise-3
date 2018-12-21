@@ -1,0 +1,66 @@
+///////////////////*IF*///////////////////
+///////////////////*1 (aviad) *///////////////////
+input: x=1 y=2 z=3 
+function foo(x, y, z){
+    let a = x + 1;
+    let b = a + y;
+    let c = 0;
+    
+    if (b < z) {
+        c = c + 5;
+    } else if (b < z * 2) {
+        c = c + x + 5;
+    } else {
+        c = c + z + 5;
+    }
+    
+    return c;
+}
+
+///////////////////*2*///////////////////
+input: x=1 and try then x=2
+function YR (x) {
+let a=0;
+let b=1;
+if (x==2)
+   {
+    x = 2;
+    if (x==2)
+   { a = a; }
+    else if (x==1)
+   { b = b; }
+   let f=1;
+   b=f;
+   }
+else if (x==1)
+   { x = x}
+else
+   { a = a }
+return 3;
+}
+///////////////////*3*///////////////////
+input: x=1
+function YR (x) {
+let a=0;
+let b=1;
+if (x==2)
+   {
+    x = 2; 
+   }
+return 3;
+}
+//check that if has F that goes to continue
+
+
+
+///////////////////*while*///////////////////
+///////////////////*1*///////////////////
+function YR (x) {
+let a=0;
+let b=1;
+while (x==2)
+   {
+    x = 2;
+   }
+return 3;
+}

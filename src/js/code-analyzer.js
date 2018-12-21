@@ -435,6 +435,14 @@ function ParseWhileStatement(expression)
 {
     Do = CheckForCondition(expression.test);
     var condition = ParseDataToTable(expression.test);
+    var ShouldICheckMySelf =  Peek(stackWasReached) && Peek(stackLastIf);
+    SetGraph2(graph.length - 1, GraphCreator.If(condition),ShouldICheckMySelf, 'condif', 'condif' + condif); //the if text
+    var lastCondIf = condif;
+    stackCameFrom.push('condif' + condif+'|T');
+    condif++;
+    stackWasReached.push(ShouldICheckMySelf);
+    stackLastIf.push(CheckForCondition(expression.test));
+    ParseDataToTable(expression.consequent);
     ParseDataToTable(expression.body);
 }
 
@@ -461,11 +469,15 @@ function ParseIfStatement(expression)
 {
     var condition = ParseDataToTable(expression.test);
     var type = expression.type == 'IfStatement'; var ShouldICheckMySelf;
-    if (type)
-        ShouldICheckMySelf =  Peek(stackWasReached) && Peek(stackLastIf);
-    else
-        ShouldICheckMySelf =  Peek(stackWasReached)&& !Peek(stackLastIf);
-    SetGraph2(graph.length - 1, GraphCreator.If(condition),ShouldICheckMySelf, 'condif', 'condif' + condif); //the if text
+    if (type) {
+        ShouldICheckMySelf = Peek(stackWasReached) && Peek(stackLastIf);
+        SetGraph2(graph.length - 1, GraphCreator.If(condition),ShouldICheckMySelf, 'condif', 'condif' + condif); //the if text
+    }
+    else {
+        ShouldICheckMySelf = Peek(stackWasReached) && !Peek(stackLastIf);
+        SetGraph2(graph.length - 1, GraphCreator.ElseIf(condition),ShouldICheckMySelf, 'condif', 'condif' + condif); //the if text
+    }
+
     var lastCondIf = condif;
     stackCameFrom.push('condif' + condif+'|T');
     condif++;
