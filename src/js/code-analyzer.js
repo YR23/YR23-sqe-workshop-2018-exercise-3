@@ -244,8 +244,7 @@ function ConnectTheEveries() {
     {
         if (graph[i]['name'].substr(0,8)=='everyone')
             if (GetMeEveryNum(graph[i]['name'])>=start && GetMeEveryNum(graph[i]['name'])<end)
-                if (graph[i]['nextT'] == '')
-                    graph[i]['nextT'] = 'everyone'+end;
+                graph[i]['nextT'] = 'everyone'+end;
     }
 }
 
@@ -319,16 +318,15 @@ function KindOfOpearion(name, operator, value) {
         return name != value;
     return name == value;
 }
-
+/*
 function CheckIfOpeatorIsEq(operator) {
     return (operator == '==' || operator == '===' || operator == '!=');
 }
-
+*/
 function WhatToReturn(name, operator, value) {
     if (Number.isInteger(name) && Number.isInteger(value))
         return eval(name+operator+value);
-    if (CheckIfOpeatorIsEq(operator))
-        return KindOfOpearion(name,operator,value);
+    return KindOfOpearion(name,operator,value);
     //return name +operator+ value; options to show
 }
 
