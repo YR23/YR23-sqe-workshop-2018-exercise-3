@@ -65,15 +65,7 @@ describe('Cheking IF Function: using If and ElseIf and Else', () => {
     var TestedInput = 'function foo(x){\n' +
         '    let a=2;\n' +
         '    if (x < 2) {\n' +
-        '        x =  5;\n' +
-        '    } else if (x < 3) {\n' +
-        '        x =   5;\n' +
-        '    } else {\n' +
-        '        x= x  + 5;\n' +
-        '    }\n' +
-        '    \n' +
-        '    return z;\n' +
-        '}';
+        '        x =  5;} else if (x < 3) {x =   5;} else { x= x  + 5;}return z;}';
     var input = ParseMyInput('x=1|y=2|z=3');
     var result = parser.ParseDataToTableBig(TestedInput,input);
     it('total', () => {
@@ -96,10 +88,7 @@ describe('Cheking IF Function: nested If', () => {
         'if (x < y) {\n' +
         ' x=x+1; \n' +
         'if (x<y){\n' +
-        'x=x;\n' +
-        '}\n' +
-        '} \n' +
-        'return -1;}';
+        'x=x;}}return -1;}';
     var input = ParseMyInput('x=1|y=2|z=3');
     var result = parser.ParseDataToTableBig(TestedInput,input);
     it('total', () => {
@@ -122,21 +111,11 @@ describe('Aviram Code', () => {
         '    let a = x + 1;\n' +
         '    let b = a + y;\n' +
         '    let c = 0;\n' +
-        '    \n' +
-        '    if (b < z) {\n' +
-        '        c = c + 5;\n' +
-        '    } else if (b < z * 2) {\n' +
-        '        c = c + x + 5;\n' +
-        '    } else {\n' +
-        '        c = c + z + 5;\n' +
-        '    }\n' +
-        '    \n' +
-        '    return c;\n' +
-        '}\n';
+        '    if (b < z) { c = c + 5;} else if (b < z * 2) {c = c + x + 5;} else {c = c + z + 5};return c;}';
     var input = ParseMyInput('x=1|y=2|z=3');
     var result = parser.ParseDataToTableBig(TestedInput,input);
     it('total', () => {
-        assert.equal(result.length,8);
+        assert.equal(result.length,9);
     });
     it('count Greens', () => {
         var counter = Count(result,true);
@@ -144,9 +123,8 @@ describe('Aviram Code', () => {
     });
     it('count Reds', () => {
         var counter = Count(result,false);
-        assert.equal(counter,2);
+        assert.equal(counter,3);
     });
-
 });
 
 //** 6 **//
@@ -175,8 +153,7 @@ describe('Now Checking just Unary', () => {
 describe('Now Checking just Member exp', () => {
     var TestedInput = 'function foo(x){\n' +
         'let a=0;\n' +
-        'return z[0];\n' +
-        '}';
+        'return z[0];}';
     var input = ParseMyInput('x=1|y=2|z=[1,2]');
     var result = parser.ParseDataToTableBig(TestedInput,input);
     it('total', () => {
@@ -190,8 +167,6 @@ describe('Now Checking just Member exp', () => {
         var counter = Count(result,false);
         assert.equal(counter,0);
     });
-
-
 });
 
 //** 8 **//
@@ -242,8 +217,7 @@ describe('Checking while function with if inside ', () => {
     var TestedInput = 'function foo(x){\n' +
         'let a=0;\n' +
         'while (x==2) {if (x==1){x=x}}\n' +
-        'return -1;\n' +
-        '}';
+        'return -1;}';
     var input = ParseMyInput('x=1');
     var result = parser.ParseDataToTableBig(TestedInput,input);
     it('total', () => {
@@ -265,8 +239,7 @@ describe('Checking while function with if else inside ', () => {
     var TestedInput = 'function foo(x){\n' +
         'let a=0;\n' +
         'while (x==2) {if (x==1){x=x}else{a=a}}\n' +
-        'return -1;\n' +
-        '}';
+        'return -1;}';
     var input = ParseMyInput('x=1');
     var result = parser.ParseDataToTableBig(TestedInput,input);
     it('total', () => {
@@ -311,8 +284,7 @@ describe('Now Checking strings just to be safe ', () => {
         'let a="hello";\n' +
         'let b = "hello";\n' +
         ' if (a==b){x=x; if (x!=1) {a=a}}\n' +
-        'return -1;\n' +
-        '}';
+        'return -1;}';
     var input = ParseMyInput('x=1');
     var result = parser.ParseDataToTableBig(TestedInput,input);
     it('total', () => {
@@ -333,9 +305,7 @@ describe('Now != with string just to be sure sure  ', () => {
     var TestedInput = 'function foo(x){\n' +
         'let a="hello";\n' +
         'let b = "hello1";\n' +
-        ' if (a!=b){x=x; if (x!=1) {a=a}}\n' +
-        'return -1;\n' +
-        '}';
+        ' if (a!=b){x=x; if (x!=1) {a=a}}return -1;}';
     var input = ParseMyInput('x=1');
     var result = parser.ParseDataToTableBig(TestedInput,input);
     it('total', () => {
@@ -357,8 +327,7 @@ describe('Now Checkin var dec inside an if that is false ', () => {
         'let a="hello";\n' +
         'let b = "hello1";\n' +
         ' if (a==b){x=x; if (x!=1) {let c=0;}}\n' +
-        'return -1;\n' +
-        '}';
+        'return -1;}';
     var input = ParseMyInput('x=1');
     var result = parser.ParseDataToTableBig(TestedInput,input);
     it('total', () => {
@@ -379,10 +348,7 @@ describe('Now Checkin member inside an if ', () => {
     describe('Now Checkin var dec inside an if that is false ', () => {
         var TestedInput = 'function foo(x,y,z){\n' +
             'let a="hello";\n' +
-            'let b = "hello1";\n' +
-            ' if (z[0]==3){x=x; if (x!=1) {let c=0;}}\n' +
-            'return -1;\n' +
-            '}';
+            'let b = "hello1";if (z[0]==3){x=x; if (x!=1) {let c=0;}}return -1;}';
         var input = ParseMyInput('x=1|y=2|z=[1,2]');
         var result = parser.ParseDataToTableBig(TestedInput,input);
         it('total', () => {
@@ -405,8 +371,7 @@ describe('Now 2 numbers with addition', () => {
         'let a=1+1;\n' +
         'let b = "hello1";\n' +
         ' if (a==3){x=x; if (x!=1) {let c=0;}}\n' +
-        'return -1;\n' +
-        '}';
+        'return -1;}';
     var input = ParseMyInput('x=1|y=2|z=[1,2]');
     var result = parser.ParseDataToTableBig(TestedInput,input);
     it('total', () => {
@@ -427,9 +392,7 @@ describe('Empty Return ', () => {
     var TestedInput = 'function foo(x,y,z){\n' +
         'let a=1+1;\n' +
         'let b = "hello1";\n' +
-        ' if (a==3){x=x; if (x!=1) {let c=0;}}\n' +
-        'return ;\n' +
-        '}';
+        ' if (a==3){x=x; if (x!=1) {let c=0;}}return ;}';
     var input = ParseMyInput('x=1|y=2|z=[1,2]');
     var result = parser.ParseDataToTableBig(TestedInput,input);
     it('total', () => {
@@ -451,21 +414,7 @@ describe('complex situation ', () => {
         'let a=0;\n' +
         'let b=1;\n' +
         'if (x==2)\n' +
-        '   {\n' +
-        '    x = 2;\n' +
-        '    if (x==2)\n' +
-        '   { a = a; }\n' +
-        '    else if (x==1)\n' +
-        '   { b = b; }\n' +
-        '   let f=1;\n' +
-        '   b=f;\n' +
-        '   }\n' +
-        'else if (x==1)\n' +
-        '   { x = x}\n' +
-        'else\n' +
-        '   { a = a }\n' +
-        'return 3;\n' +
-        '}';
+        '   {x = 2;if (x==2){ a = a; }else if (x==1){ b = b; }let f=1;b=f;}else if (x==1){ x = x}else{ a = a }return 3;}';
     var input = ParseMyInput('x=2');
     var result = parser.ParseDataToTableBig(TestedInput,input);
     it('total', () => {
