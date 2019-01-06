@@ -1,6 +1,6 @@
 import $ from 'jquery';
 import {ParseDataToTableBig} from './code-analyzer';
-
+import * as flowchart from './flowchart';
 
 
 $(document).ready(function () {
@@ -28,22 +28,9 @@ function CreateTableFromGraph(FinalGraph,TypeToType) {
     diagram.drawSVG('diagram', {
         'x': 0,
         'y': 0,
-        'line-width': 3,
-        'line-length': 50,
-        'text-margin': 10,
-        'font-size': 14,
-        'font-color': 'black',
-        'line-color': 'black',
-        'element-color': 'black',
-        'fill': 'white',
-        'yes-text': 'T',
-        'no-text': 'F',
-        'arrow-end': 'block',
-        'scale': 1,
-        // style symbol types
-
-        // even flowstate support ;-)
-        'flowstate' : {
+        'line-width': 3, 'line-length': 50, 'text-margin': 10, 'font-size': 14,
+        'font-color': 'black', 'line-color': 'black', 'element-color': 'black', 'fill': 'white',
+        'yes-text': 'T', 'no-text': 'F', 'arrow-end': 'block', 'scale': 1, 'flowstate' : {
             'true' : { 'fill' : '#005a02', 'font-size' : 12},
             'false' : { 'fill' : '#ff000c'},
         }
@@ -59,35 +46,33 @@ function CreatePart1(FinalGraph,TypeToType) {
     return str;
 }
 
+function DoIfnum1Part2(FinalGraph,i,str) {
+    if (FinalGraph[i].type != 'return')
+        if (FinalGraph[i].nextT != '') {
+            if (FinalGraph[i].nextT.substr(0,7) == 'checker') str += FinalGraph[i].name + '(bottom)->' + FinalGraph[i].nextT + '\n' ;
+            else if (FinalGraph[i].type == 'everyone') str += FinalGraph[i].name + '(right)->' + FinalGraph[i].nextT + '\n' ;
+            else str += FinalGraph[i].name + '(bottom)->' + FinalGraph[i].nextT + '\n';
+        }
+    return str;
+}
+
+function DoIfnum2Part2(FinalGraph,i,str) {
+    if (FinalGraph[i].nextF != '' || FinalGraph[i].nextT != '') {
+        if (FinalGraph[i].nextT != '') str += FinalGraph[i].name + '(yes,right)->' + FinalGraph[i].nextT + '\n';
+        if (FinalGraph[i].nextF != '') str += FinalGraph[i].name + '(no,bottom)->' + FinalGraph[i].nextF + '\n';
+    }
+    return str;
+}
+
 function CreatePart2(FinalGraph) {
     let str = '';
-
     for (let i=0;i<FinalGraph.length;i++) {
-        if (FinalGraph[i].next != '')
-        {
-            str += FinalGraph[i].name + '->' + FinalGraph[i].next + '\n' ;
-        }
+        if (FinalGraph[i].next != '') str += FinalGraph[i].name + '->' + FinalGraph[i].next + '\n' ;
         if (FinalGraph[i].type != 'condif' && FinalGraph[i].type != 'condwhile') {
-            if (FinalGraph[i].type != 'return')
-                if (FinalGraph[i].nextT != '') {
-                    if (FinalGraph[i].nextT.substr(0,7) == 'checker')
-                        str += FinalGraph[i].name + '(bottom)->' + FinalGraph[i].nextT + '\n' ;
-                    else if (FinalGraph[i].type == 'everyone')
-                        str += FinalGraph[i].name + '(right)->' + FinalGraph[i].nextT + '\n' ;
-                    else
-                        str += FinalGraph[i].name + '(bottom)->' + FinalGraph[i].nextT + '\n';
-                }
+            str = DoIfnum1Part2(FinalGraph,i,str);
         }
         else {
-            if (FinalGraph[i].nextF != '' || FinalGraph[i].nextT != '') {
-                if (FinalGraph[i].nextT != '')
-
-                    str += FinalGraph[i].name + '(yes,right)->' + FinalGraph[i].nextT + '\n';
-
-                if (FinalGraph[i].nextF != '')
-                    str += FinalGraph[i].name + '(no,bottom)->' + FinalGraph[i].nextF + '\n';
-
-            }
+            str = DoIfnum2Part2(FinalGraph,i,str);
         }
     }
     return str;
