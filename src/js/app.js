@@ -1,80 +1,431 @@
-import $ from 'jquery';
-import {ParseDataToTableBig} from './code-analyzer';
-import * as flowchart from './flowchart';
+var assert = require('assert');
+import * as parser from '../src/js/code-analyzer';
+
+//* Helping Function */
+function Count(graph,type)
+{
+    var counter = 0;
+    for (var i=0;i<graph.length;i++)
+    {
+        if (graph[i].True == type)
+            counter++;
+    }
+    return counter;
+
+/* End of Helping Functions*/
+
+}
 
 
-$(document).ready(function () {
-    $('#codeSubmissionButton').click(() => {
-        let codeToParse = $('#codePlaceholder').val();
-        var args = readArgs($('#args').val());
-        var FinalGraph = ParseDataToTableBig(codeToParse,args);
-        let TypeToType={opp:'operation',condif:'condition',everyone:'start',condwhile:'condition',return:'operation',checker:'inputoutput'};
-        $('#parsedCode').val(CreateTableFromGraph(FinalGraph,TypeToType));
-    });
-});
-
-function readArgs(val) {
+function ParseMyInput(val) {
     return val.split('|');
 }
 
-function CreateTableFromGraph(FinalGraph,TypeToType) {
-    let strpart1  = '';
-    let strpart2 = '';
+//** 1 **//
 
-    strpart1 = CreatePart1(FinalGraph,TypeToType);
-    strpart2 = CreatePart2(FinalGraph,TypeToType);
-
-    const diagram = flowchart.parse(strpart1 +strpart2);
-    diagram.drawSVG('diagram', {
-        'x': 0,
-        'y': 0,
-        'line-width': 3, 'line-length': 50, 'text-margin': 10, 'font-size': 14,
-        'font-color': 'black', 'line-color': 'black', 'element-color': 'black', 'fill': 'white',
-        'yes-text': 'T', 'no-text': 'F', 'arrow-end': 'block', 'scale': 1, 'flowstate' : {
-            'true' : { 'fill' : '#005a02', 'font-size' : 12},
-            'false' : { 'fill' : '#ff000c'},
-        }
+describe('Cheking IF Function', () => {
+    var TestedInput = 'function foo(x, y, z){if (x < y) {x=x+1} return -1;}';
+    var input = ParseMyInput('x=1|y=2|z=3');
+    var result = parser.ParseDataToTableBig(TestedInput,input);
+    it('total', () => {         
+        assert.equal(result.length,4);
     });
-    return strpart1+'\n\n'+strpart2;
-}
+    it('count Greens', () => {
+        var counter = Count(result,true);
+        assert.equal(counter,4);
+    }); 
+    it('count Reds', () => {
+        var counter = Count(result,false);
+        assert.equal(counter,0);
+    });
+});
 
-function CreatePart1(FinalGraph,TypeToType) {
-    let str = '';
+//** 2 **//
 
-    for (let i=0;i<FinalGraph.length;i++)
-        str +=FinalGraph[i].name +'=>'+TypeToType[FinalGraph[i].type]+': '+FinalGraph[i].text +'|'+FinalGraph[i].True+'\n';
-    return str;
-}
+describe('Cheking IF Function: using If and Else only', () => {
+    var TestedInput = 'function foo(x, y, z){if (x < y) {x=x+1} else{y=y+1} return -1;}';
+    var input = ParseMyInput('x=1|y=2|z=3');
+    var result = parser.ParseDataToTableBig(TestedInput,input);
+    it('total', () => {
+        assert.equal(result.length,5);
+    });
+    it('count Greens', () => {
+        var counter = Count(result,true);
+        assert.equal(counter,4);
+    });
+    it('count Reds', () => {
+        var counter = Count(result,false);
+        assert.equal(counter,1);
+    });
+});
 
-function DoIfnum1Part2(FinalGraph,i,str) {
-    if (FinalGraph[i].type != 'return')
-        if (FinalGraph[i].nextT != '') {
-            if (FinalGraph[i].nextT.substr(0,7) == 'checker') str += FinalGraph[i].name + '(bottom)->' + FinalGraph[i].nextT + '\n' ;
-            else if (FinalGraph[i].type == 'everyone') str += FinalGraph[i].name + '(right)->' + FinalGraph[i].nextT + '\n' ;
-            else str += FinalGraph[i].name + '(bottom)->' + FinalGraph[i].nextT + '\n';
-        }
-    return str;
-}
+//** 3 **//
 
-function DoIfnum2Part2(FinalGraph,i,str) {
-    if (FinalGraph[i].nextF != '' || FinalGraph[i].nextT != '') {
-        if (FinalGraph[i].nextT != '') str += FinalGraph[i].name + '(yes,right)->' + FinalGraph[i].nextT + '\n';
-        if (FinalGraph[i].nextF != '') str += FinalGraph[i].name + '(no,bottom)->' + FinalGraph[i].nextF + '\n';
-    }
-    return str;
-}
+describe('Cheking IF Function: using If and ElseIf and Else', () => {
+    var TestedInput = 'function foo(x){\n' +
+        '    let a=2;\n' +
+        '    if (x < 2) {\n' +
+        '        x =  5;} else if (x < 3) {x =   5;} else { x= x  + 5;}return z;}';
+    var input = ParseMyInput('x=1|y=2|z=3');
+    var result = parser.ParseDataToTableBig(TestedInput,input);
+    it('total', () => {
+        assert.equal(result.length,8);
+    });
+    it('count Greens', () => {
+        var counter = Count(result,true);
+        assert.equal(counter,5);
+    });
+    it('count Reds', () => {
+        var counter = Count(result,false);
+        assert.equal(counter,3);
+    });
+});
 
-function CreatePart2(FinalGraph) {
-    let str = '';
-    for (let i=0;i<FinalGraph.length;i++) {
-        if (FinalGraph[i].next != '') str += FinalGraph[i].name + '->' + FinalGraph[i].next + '\n' ;
-        if (FinalGraph[i].type != 'condif' && FinalGraph[i].type != 'condwhile') {
-            str = DoIfnum1Part2(FinalGraph,i,str);
-        }
-        else {
-            str = DoIfnum2Part2(FinalGraph,i,str);
-        }
-    }
-    return str;
-}
+//** 4 **//
 
+describe('Cheking IF Function: nested If', () => {
+    var TestedInput = 'function foo(x, y, z){\n' +
+        'if (x < y) {\n' +
+        ' x=x+1; \n' +
+        'if (x<y){\n' +
+        'x=x;}}return -1;}';
+    var input = ParseMyInput('x=1|y=2|z=3');
+    var result = parser.ParseDataToTableBig(TestedInput,input);
+    it('total', () => {
+        assert.equal(result.length,7);
+    });
+    it('count Greens', () => {
+        var counter = Count(result,true);
+        assert.equal(counter,6);
+    });
+    it('count Reds', () => {
+        var counter = Count(result,false);
+        assert.equal(counter,1);
+    });
+});
+
+//** 5 **//
+
+describe('Aviram Code', () => {
+    var TestedInput = 'function foo(x, y, z){\n' +
+        '    let a = x + 1;\n' +
+        '    let b = a + y;\n' +
+        '    let c = 0;\n' +
+        '    if (b < z) { c = c + 5;} else if (b < z * 2) {c = c + x + 5;} else {c = c + z + 5};return c;}';
+    var input = ParseMyInput('x=1|y=2|z=3');
+    var result = parser.ParseDataToTableBig(TestedInput,input);
+    it('total', () => {
+        assert.equal(result.length,9);
+    });
+    it('count Greens', () => {
+        var counter = Count(result,true);
+        assert.equal(counter,6);
+    });
+    it('count Reds', () => {
+        var counter = Count(result,false);
+        assert.equal(counter,3);
+    });
+});
+
+//** 6 **//
+
+describe('Now Checking just Unary', () => {
+    var TestedInput = 'function foo(x){\n' +
+        'let a=0;\n' +
+        'return -1;\n' +
+        '}';
+    var input = ParseMyInput('x=1');
+    var result = parser.ParseDataToTableBig(TestedInput,input);
+    it('total', () => {
+        assert.equal(result.length,2);
+    });
+    it('count Greens', () => {
+        var counter = Count(result,true);
+        assert.equal(counter,2);
+    });
+    it('count Reds', () => {
+        var counter = Count(result,false);
+        assert.equal(counter,0);
+    });
+});
+
+//** 7 **//
+describe('Now Checking just Member exp', () => {
+    var TestedInput = 'function foo(x){\n' +
+        'let a=0;\n' +
+        'return z[0];}';
+    var input = ParseMyInput('x=1|y=2|z=[1,2]');
+    var result = parser.ParseDataToTableBig(TestedInput,input);
+    it('total', () => {
+        assert.equal(result.length,2);
+    });
+    it('count Greens', () => {
+        var counter = Count(result,true);
+        assert.equal(counter,2);
+    });
+    it('count Reds', () => {
+        var counter = Count(result,false);
+        assert.equal(counter,0);
+    });
+});
+
+//** 8 **//
+describe('Now Checking Strings ', () => {
+    var TestedInput = 'function foo(x,y){\n' +
+        'let a=0;\n' +
+        'return x;\n' +
+        '}';
+    var input = ParseMyInput('x="hello"|y=2');
+    var result = parser.ParseDataToTableBig(TestedInput,input);
+    it('total', () => {
+        assert.equal(result.length,2);
+    });
+    it('count Greens', () => {
+        var counter = Count(result,true);
+        assert.equal(counter,2);
+    });
+    it('count Reds', () => {
+        var counter = Count(result,false);
+        assert.equal(counter,0);
+    });
+});
+
+//** 9 **//
+describe('Now Checking regular while ', () => {
+    var TestedInput = 'function foo(x){\n' +
+        'let a=0;\n' +
+        'while (x==2) {x=x}\n' +
+        'return -1;\n' +
+        '}';
+    var input = ParseMyInput('x=1');
+    var result = parser.ParseDataToTableBig(TestedInput,input);
+    it('total', () => {
+        assert.equal(result.length,5);
+    });
+    it('count Greens', () => {
+        var counter = Count(result,true);
+        assert.equal(counter,4);
+    });
+    it('count Reds', () => {
+        var counter = Count(result,false);
+        assert.equal(counter,1);
+    });
+});
+
+//** 10 **//
+describe('Checking while function with if inside ', () => {
+    var TestedInput = 'function foo(x){\n' +
+        'let a=0;\n' +
+        'while (x==2) {if (x==1){x=x}}\n' +
+        'return -1;}';
+    var input = ParseMyInput('x=1');
+    var result = parser.ParseDataToTableBig(TestedInput,input);
+    it('total', () => {
+        assert.equal(result.length,7);
+    });
+    it('count Greens', () => {
+        var counter = Count(result,true);
+        assert.equal(counter,4);
+    });
+    it('count Reds', () => {
+        var counter = Count(result,false);
+        assert.equal(counter,3);
+    });
+
+});
+
+//** 11 **//
+describe('Checking while function with if else inside ', () => {
+    var TestedInput = 'function foo(x){\n' +
+        'let a=0;\n' +
+        'while (x==2) {if (x==1){x=x}else{a=a}}\n' +
+        'return -1;}';
+    var input = ParseMyInput('x=1');
+    var result = parser.ParseDataToTableBig(TestedInput,input);
+    it('total', () => {
+        assert.equal(result.length,8);
+    });
+    it('count Greens', () => {
+        var counter = Count(result,true);
+        assert.equal(counter,4);
+    });
+    it('count Reds', () => {
+        var counter = Count(result,false);
+        assert.equal(counter,4);
+    });
+
+});
+
+//** 12 **//
+describe('Now that if -> opperation -> if', () => {
+    var TestedInput = 'function foo(x){\n' +
+        'let a=0;\n' +
+        ' if (x==1){x=x; if (x==2) {a=a}}\n' +
+        'return -1;\n' +
+        '}';
+    var input = ParseMyInput('x=1');
+    var result = parser.ParseDataToTableBig(TestedInput,input);
+    it('total', () => {
+        assert.equal(result.length,8);
+    });
+    it('count Greens', () => {
+        var counter = Count(result,true);
+        assert.equal(counter,7);
+    });
+    it('count Reds', () => {
+        var counter = Count(result,false);
+        assert.equal(counter,1);
+    });
+});
+
+//** 13 **//
+describe('Now Checking strings just to be safe ', () => {
+    var TestedInput = 'function foo(x){\n' +
+        'let a="hello";\n' +
+        'let b = "hello";\n' +
+        ' if (a==b){x=x; if (x!=1) {a=a}}\n' +
+        'return -1;}';
+    var input = ParseMyInput('x=1');
+    var result = parser.ParseDataToTableBig(TestedInput,input);
+    it('total', () => {
+        assert.equal(result.length,8);
+    });
+    it('count Greens', () => {
+        var counter = Count(result,true);
+        assert.equal(counter,7);
+    });
+    it('count Reds', () => {
+        var counter = Count(result,false);
+        assert.equal(counter,1);
+    });
+});
+
+//** 14 **//
+describe('Now != with string just to be sure sure  ', () => {
+    var TestedInput = 'function foo(x){\n' +
+        'let a="hello";\n' +
+        'let b = "hello1";\n' +
+        ' if (a!=b){x=x; if (x!=1) {a=a}}return -1;}';
+    var input = ParseMyInput('x=1');
+    var result = parser.ParseDataToTableBig(TestedInput,input);
+    it('total', () => {
+        assert.equal(result.length,8);
+    });
+    it('count Greens', () => {
+        var counter = Count(result,true);
+        assert.equal(counter,7);
+    });
+    it('count Reds', () => {
+        var counter = Count(result,false);
+        assert.equal(counter,1);
+    });
+});
+
+//** 15 **//
+describe('Now Checkin var dec inside an if that is false ', () => {
+    var TestedInput = 'function foo(x){\n' +
+        'let a="hello";\n' +
+        'let b = "hello1";\n' +
+        ' if (a==b){x=x; if (x!=1) {let c=0;}}\n' +
+        'return -1;}';
+    var input = ParseMyInput('x=1');
+    var result = parser.ParseDataToTableBig(TestedInput,input);
+    it('total', () => {
+        assert.equal(result.length,8);
+    });
+    it('count Greens', () => {
+        var counter = Count(result,true);
+        assert.equal(counter,4);
+    });
+    it('count Reds', () => {
+        var counter = Count(result,false);
+        assert.equal(counter,4);
+    });
+});
+
+//** 16 **//
+describe('Now Checkin member inside an if ', () => {
+    describe('Now Checkin var dec inside an if that is false ', () => {
+        var TestedInput = 'function foo(x,y,z){\n' +
+            'let a="hello";\n' +
+            'let b = "hello1";if (z[0]==3){x=x; if (x!=1) {let c=0;}}return -1;}';
+        var input = ParseMyInput('x=1|y=2|z=[1,2]');
+        var result = parser.ParseDataToTableBig(TestedInput,input);
+        it('total', () => {
+            assert.equal(result.length,8);
+        });
+        it('count Greens', () => {
+            var counter = Count(result,true);
+            assert.equal(counter,4);
+        });
+        it('count Reds', () => {
+            var counter = Count(result,false);
+            assert.equal(counter,4);
+        });
+    });
+});
+
+//** 17 **//
+describe('Now 2 numbers with addition', () => {
+    var TestedInput = 'function foo(x,y,z){\n' +
+        'let a=1+1;\n' +
+        'let b = "hello1";\n' +
+        ' if (a==3){x=x; if (x!=1) {let c=0;}}\n' +
+        'return -1;}';
+    var input = ParseMyInput('x=1|y=2|z=[1,2]');
+    var result = parser.ParseDataToTableBig(TestedInput,input);
+    it('total', () => {
+        assert.equal(result.length,8);
+    });
+    it('count Greens', () => {
+        var counter = Count(result,true);
+        assert.equal(counter,4);
+    });
+    it('count Reds', () => {
+        var counter = Count(result,false);
+        assert.equal(counter,4);
+    });
+});
+
+//** 18 **//
+describe('Empty Return ', () => {
+    var TestedInput = 'function foo(x,y,z){\n' +
+        'let a=1+1;\n' +
+        'let b = "hello1";\n' +
+        ' if (a==3){x=x; if (x!=1) {let c=0;}}return ;}';
+    var input = ParseMyInput('x=1|y=2|z=[1,2]');
+    var result = parser.ParseDataToTableBig(TestedInput,input);
+    it('total', () => {
+        assert.equal(result.length,8);
+    });
+    it('count Greens', () => {
+        var counter = Count(result,true);
+        assert.equal(counter,4);
+    });
+    it('count Reds', () => {
+        var counter = Count(result,false);
+        assert.equal(counter,4);
+    });
+});
+
+//** 19 **//
+describe('complex situation ', () => {
+    var TestedInput = 'function YR (x) {\n' +
+        'let a=0;\n' +
+        'let b=1;\n' +
+        'if (x==2)\n' +
+        '   {x = 2;if (x==2){ a = a; }else if (x==1){ b = b; }let f=1;b=f;}else if (x==1){ x = x}else{ a = a }return 3;}';
+    var input = ParseMyInput('x=2');
+    var result = parser.ParseDataToTableBig(TestedInput,input);
+    it('total', () => {
+        assert.equal(result.length,14);
+    });
+    it('count Greens', () => {
+        var counter = Count(result,true);
+        assert.equal(counter,9);
+    });
+    it('count Reds', () => {
+        var counter = Count(result,false);
+        assert.equal(counter,5);
+    });
+});
